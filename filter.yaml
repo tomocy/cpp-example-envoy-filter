@@ -9,6 +9,31 @@ spec:
       app: frontpage
       version: v1
   configPatches:
+  - applyTo: NETWORK_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      proxy:
+        proxyVersion: '^1\.5.*'
+      listener:
+        portNumber: 8083
+        filterChain:
+          filter:
+            name: envoy.tcp_proxy
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.network.wasm
+        config:
+          config:
+            name: example-filter
+            rootId: example_root
+            vmConfig:
+              vmId: example-filter
+              runtime: envoy.wasm.runtime.v8
+              code:
+                local:
+                  filename: /var/local/lib/wasm-filters/filter.wasm
+              allow_precompiled: true
   - applyTo: HTTP_FILTER
     match:
       context: SIDECAR_INBOUND
